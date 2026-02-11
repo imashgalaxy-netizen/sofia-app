@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#121212">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --main-bg: #121212; --card-bg: #1e1e1e; --accent-gold: #c5a059;
+            --accent-blue: #5dade2; --text-bright: #ffffff; --text-dim: #a0a0a0;
+            --border-color: #333333; --select-glow: #3498db;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif; background-color: var(--main-bg);
+            color: var(--text-bright); margin: 0; padding: 20px 20px 120px;
+            display: flex; flex-direction: column; align-items: center; overflow-x: hidden;
+        }
+
+        /* Эффекты удаления */
+        .flash-gold {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(197, 160, 89, 0.3); z-index: 9999; pointer-events: none;
+            animation: flash-anim 0.6s ease-out forwards;
+        }
+        @keyframes flash-anim { from { opacity: 1; } to { opacity: 0; } }
+
+        .fade-out-all {
+            transform: scale(0.7) translateY(300px) rotate(10deg) !important;
+            opacity: 0 !important; transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+
+        .main-container { width: 100%; max-width: 480px; }
+
+        h2 {
+            font-weight: 800; letter-spacing: 5px; text-transform: uppercase;
+            background: linear-gradient(to right, var(--accent-gold), #fff, var(--accent-gold));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            text-align: center; margin-bottom: 30px; cursor: pointer;
+            user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+        }
+
+        .input-section {
+            background: var(--card-bg); padding: 20px; border-radius: 12px;
+            margin-bottom: 20px; border-left: 4px solid var(--accent-gold);
+        }
+
+        .input-section h4 { margin: 0 0 15px 0; color: var(--accent-gold); font-size: 12px; letter-spacing: 2px; text-transform: uppercase; }
+
+        input {
+            width: 100%; padding: 14px; margin: 8px 0; border: 1px solid var(--border-color);
+            border-radius: 8px; background: #252525; color: white; box-sizing: border-box; font-family: 'Montserrat';
+        }
+
+        .action-bar { display: flex; gap: 12px; margin-bottom: 40px; }
+        .save-btn { flex: 2; padding: 16px; background: var(--accent-gold); color: var(--main-bg); border: none; border-radius: 8px; font-weight: 800; text-transform: uppercase; }
+        .clean-btn { flex: 1; padding: 10px; background: transparent; color: var(--text-dim); border: 1px solid var(--border-color); border-radius: 8px; font-size: 10px; font-weight: 600; text-transform: uppercase; }
+
+        .boutique-card {
+            background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px;
+            padding: 25px; margin-bottom: 20px; position: relative; overflow: hidden; transition: all 0.3s ease;
+            user-select: none; -webkit-tap-highlight-color: transparent;
+        }
+        .boutique-card.selected { border-color: var(--select-glow); box-shadow: 0 0 20px rgba(52, 152, 219, 0.3); transform: scale(1.02); }
+        .boutique-card.crossed-out { opacity: 0.2; filter: grayscale(1); }
+        .boutique-card.crossed-out::after {
+            content: "ОПЛАЧЕНО"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-15deg);
+            color: var(--accent-gold); border: 3px solid var(--accent-gold); padding: 10px 20px; font-size: 24px; font-weight: 800; z-index: 10;
+        }
+
+        .weather-box { position: absolute; top: 20px; right: 25px; text-align: right; }
+        .temp-val { font-size: 16px; font-weight: 800; color: var(--text-bright); display: block; }
+        .city-name { font-size: 9px; color: var(--accent-gold); letter-spacing: 2px; text-transform: uppercase; }
+
+        .boutique-header { display: flex; align-items: baseline; gap: 8px; margin: 10px 0; }
+        .label-text { font-size: 14px; font-weight: 400; color: var(--text-dim); text-transform: uppercase; letter-spacing: 2px; }
+        .unit-number { font-size: 32px; font-weight: 900; color: var(--accent-gold); letter-spacing: -1px; }
+        .divider { height: 1px; background: linear-gradient(to right, var(--accent-gold), transparent); margin: 15px 0; }
+        .data-row { font-size: 15px; margin: 12px 0; color: #d1d1d1; }
+        .qty-num { color: var(--accent-blue); font-weight: 800; }
+        .sum-num { color: var(--accent-gold); font-weight: 700; }
+        .total-row { margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; font-size: 20px; font-weight: 800; }
+
+        .wa-button { background: transparent; border: 1px solid var(--accent-gold); color: var(--accent-gold); padding: 8px 16px; border-radius: 20px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
+        .watermark { position: absolute; right: -10px; bottom: 10px; font-size: 130px; font-weight: 900; color: rgba(255, 255, 255, 0.04); pointer-events: none; }
+
+        /* Панель суммы */
+        .total-counter-panel {
+            position: fixed; bottom: 50px; width: 90%; max-width: 300px; background: #1a1a1a;
+            border-radius: 16px; padding: 20px; border: 1px solid var(--accent-gold);
+            display: flex; justify-content: space-between; align-items: center; z-index: 100;
+            transform: translateY(200%); transition: transform 0.5s ease;
+        }
+        .total-counter-panel.show { transform: translateY(0); }
+        .sum-value { font-size: 26px; font-weight: 800; color: var(--accent-gold); }
+
+        /* Кастомное окно */
+        #custom-confirm {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 10000; justify-content: center; align-items: center; backdrop-filter: blur(5px);
+        }
+        .confirm-box {
+            background: var(--card-bg); border: 1px solid var(--accent-gold); border-radius: 16px;
+            padding: 30px; width: 85%; max-width: 350px; text-align: center; box-shadow: 0 0 30px rgba(197, 160, 89, 0.2);
+        }
+        .confirm-btn-yes { background: #c0392b; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 800; flex: 1; font-family: 'Montserrat'; text-transform: uppercase; font-size: 10px; }
+        .confirm-btn-no { background: transparent; color: var(--text-dim); border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; flex: 1; font-family: 'Montserrat'; text-transform: uppercase; font-size: 10px; }
+
+        .no-export { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div class="main-container">
+    <h2 id="console-title">Business Console</h2>
+    
+    <div class="input-section">
+        <h4>Добавить данные</h4>
+        <input type="text" id="custom_b_name" placeholder="Номер бутика">
+        <input type="number" id="custom_b_70" placeholder="70 сом (кол-во)">
+        <input type="number" id="custom_b_100" placeholder="100 сом (кол-во)">
+    </div>
+
+    <div class="action-bar">
+        <button class="save-btn" onclick="processReport()">Сформировать</button>
+        <button class="clean-btn" onclick="deleteCrossed()">Очистить архив</button>
+    </div>
+
+    <div id="history-area"></div>
+</div>
+
+<div id="sum-panel" class="total-counter-panel">
+    <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase;">
+        Выбрано: <span id="selected-count" style="color: white;">0</span><br>
+        <span style="color: var(--accent-gold);">Баланс:</span>
+    </div>
+    <div class="sum-value"><span id="total-sum">0</span> <small style="font-size: 12px;">KGS</small></div>
+</div>
+
+<div id="custom-confirm">
+    <div class="confirm-box">
+        <div id="confirm-title" style="color: var(--accent-gold); font-size: 12px; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 15px; font-weight: 800;">Внимание</div>
+        <div id="confirm-text" style="font-size: 16px; margin-bottom: 25px; color: var(--text-bright);">Текст уведомления</div>
+        <div style="display: flex; gap: 10px;">
+            <button id="btn-no" class="confirm-btn-no" onclick="closeConfirm(false)">Отмена</button>
+            <button id="btn-yes" class="confirm-btn-yes" onclick="closeConfirm(true)">Да</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let selectedIds = new Set();
+    let currentTemp = "";
+    let longPressTimer;
+
+    // Регистрация Service Worker (Обновление по воздуху)
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js').then(reg => {
+                reg.onupdatefound = () => {
+                    const worker = reg.installing;
+                    worker.onstatechange = () => {
+                        if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+                            showCustomConfirm("Доступна новая версия! Обновить сейчас?", "ОБНОВЛЕНИЕ").then(res => {
+                                if(res) window.location.reload();
+                            });
+                        }
+                    };
+                };
+            });
+        });
+    }
+
+    async function fetchWeather() {
+        try {
+            const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=42.87&longitude=74.59&current_weather=true');
+            const data = await res.json();
+            currentTemp = Math.round(data.current_weather.temperature) + "°C";
+        } catch (e) { currentTemp = "---"; }
+    }
+    fetchWeather();
+
+    function processReport() {
+        const bName = document.getElementById('custom_b_name').value.trim();
+        const b70 = document.getElementById('custom_b_70').value;
+        const b100 = document.getElementById('custom_b_100').value;
+        if(!bName) return;
+        
+        const history = JSON.parse(localStorage.getItem('sofia_v7') || '[]');
+        history.unshift({
+            id: 'b-' + Date.now(),
+            boutique: bName,
+            dateTime: `${new Date().toLocaleDateString('ru-RU')} | ${new Date().toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'})}`,
+            c70: +b70 || 0, c100: +b100 || 0, isCrossed: false, temp: currentTemp
+        });
+        localStorage.setItem('sofia_v7', JSON.stringify(history));
+        document.querySelectorAll('input').forEach(i => i.value = '');
+        render();
+    }
+
+    function render() {
+        const area = document.getElementById('history-area');
+        const history = JSON.parse(localStorage.getItem('sofia_v7') || '[]');
+        area.innerHTML = '';
+        history.forEach(item => {
+            const total = (item.c70 * 70) + (item.c100 * 100);
+            area.innerHTML += `
+                <div class="boutique-card ${item.isCrossed ? 'crossed-out' : ''} ${selectedIds.has(item.id) ? 'selected' : ''}" 
+                     id="${item.id}" ondblclick="toggleSelect('${item.id}')" oncontextmenu="event.preventDefault(); toggleCrossOut('${item.id}')">
+                    <div class="watermark">${item.boutique}</div>
+                    <div class="weather-box"><span class="temp-val">${item.temp}</span><span class="city-name">BISHKEK</span></div>
+                    <div class="city-name">${item.dateTime}</div>
+                    <div class="divider"></div>
+                    <div class="boutique-header"><span class="label-text">boutique</span><span class="unit-number">${item.boutique}</span></div>
+                    <div class="data-row">70 x <span class="qty-num">${item.c70}</span> >> <span class="sum-num">${(item.c70*70).toLocaleString()}</span></div>
+                    <div class="data-row">100 x <span class="qty-num">${item.c100}</span> >> <span class="sum-num">${(item.c100*100).toLocaleString()}</span></div>
+                    <div class="total-row">
+                        <span>ИТОГО: <span style="color:var(--accent-gold)">${total.toLocaleString()}</span></span>
+                        <button class="wa-button" onclick="event.stopPropagation(); sendCard('${item.id}')">ЭКСПОРТ</button>
+                    </div>
+                </div>`;
+        });
+        updateSumDisplay();
+    }
+
+    function toggleSelect(id) {
+        selectedIds.has(id) ? selectedIds.delete(id) : selectedIds.add(id);
+        render();
+    }
+
+    function updateSumDisplay() {
+        const history = JSON.parse(localStorage.getItem('sofia_v7') || '[]');
+        let sum = 0;
+        history.forEach(item => { if(selectedIds.has(item.id)) sum += (item.c70*70)+(item.c100*100); });
+        document.getElementById('total-sum').innerText = sum.toLocaleString();
+        document.getElementById('selected-count').innerText = selectedIds.size;
+        document.getElementById('sum-panel').classList.toggle('show', selectedIds.size > 0);
+    }
+
+    function toggleCrossOut(id) {
+        let h = JSON.parse(localStorage.getItem('sofia_v7') || '[]');
+        h = h.map(i => { if(i.id === id) i.isCrossed = !i.isCrossed; return i; });
+        localStorage.setItem('sofia_v7', JSON.stringify(h));
+        render();
+    }
+
+    async function deleteCrossed() {
+        let h = JSON.parse(localStorage.getItem('sofia_v7') || '[]');
+        const count = h.filter(i => i.isCrossed).length;
+        if(count === 0) return;
+        if(await showCustomConfirm(`Удалить ${count} оплаченных записей?`, "ОЧИСТКА АРХИВА")) {
+            document.querySelectorAll('.crossed-out').forEach(el => el.classList.add('fade-out-all'));
+            setTimeout(() => {
+                localStorage.setItem('sofia_v7', JSON.stringify(h.filter(i => !i.isCrossed)));
+                selectedIds.clear(); render();
+            }, 600);
+        }
+    }
+
+    async function clearFullDatabase() {
+        if(await showCustomConfirm("Удалить ВООБЩЕ ВСЕ записи из базы данных?", "ПОЛНЫЙ СБРОС")) {
+            const flash = document.createElement('div'); flash.className = 'flash-gold'; document.body.appendChild(flash);
+            document.querySelectorAll('.boutique-card').forEach(el => el.classList.add('fade-out-all'));
+            setTimeout(() => {
+                localStorage.removeItem('sofia_v7');
+                selectedIds.clear(); render(); flash.remove();
+            }, 600);
+        }
+    }
+
+    // Логика кастомного окна
+    let confirmRes;
+    function showCustomConfirm(text, title = "ВНИМАНИЕ") {
+        document.getElementById('confirm-title').innerText = title;
+        document.getElementById('confirm-text').innerText = text;
+        document.getElementById('custom-confirm').style.display = 'flex';
+        return new Promise(res => { confirmRes = res; });
+    }
+    function closeConfirm(v) {
+        document.getElementById('custom-confirm').style.display = 'none';
+        if(confirmRes) confirmRes(v);
+    }
+
+    // Железобетонное долгое нажатие
+    const title = document.getElementById('console-title');
+    const start = () => { longPressTimer = setTimeout(clearFullDatabase, 1500); };
+    const stop = () => clearTimeout(longPressTimer);
+    title.addEventListener('touchstart', start, {passive: true});
+    title.addEventListener('touchend', stop);
+    title.addEventListener('touchmove', stop);
+    title.addEventListener('mousedown', start);
+    title.addEventListener('mouseup', stop);
+
+    async function sendCard(id) {
+        const card = document.getElementById(id);
+        card.querySelector('.wa-button').classList.add('no-export');
+        const canvas = await html2canvas(card, { backgroundColor: "#1e1e1e", scale: 3 });
+        card.querySelector('.wa-button').classList.remove('no-export');
+        const link = document.createElement('a'); link.download = `Report_${id}.png`; link.href = canvas.toDataURL(); link.click();
+    }
+
+    window.onload = render;
+</script>
+</body>
+</html>
