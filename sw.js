@@ -1,4 +1,4 @@
-\const CACHE_NAME = 'sofia-v-1.0.2'; // Увеличивай версию (1.0.3 и т.д.), чтобы пользователи получили обновление
+\const CACHE_NAME = 'sofia-v-1.0.3'; // Увеличивай версию (1.0.3 и т.д.), чтобы пользователи получили обновление
 const ASSETS = [
   './',
   'index.html',
@@ -19,4 +19,5 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
   e.respondWith(caches.match(e.request).then(res => res || fetch(e.request)));
+
 });
